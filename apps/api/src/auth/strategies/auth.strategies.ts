@@ -2,9 +2,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
-// ─── Access Token Strategy ────────────────────────────────────────────────────
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
@@ -13,7 +12,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: config.get<string>('JWT_SECRET'),
+      secretOrKey: config.get('JWT_SECRET') as string,
       ignoreExpiration: false,
     });
   }
@@ -28,30 +27,34 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 }
 
-// ─── Refresh Token Strategy ───────────────────────────────────────────────────
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
+export class JwtRefreshStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   constructor(config: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
-      secretOrKey: config.get<string>('JWT_REFRESH_SECRET'),
+      secretOrKey: config.get('JWT_REFRESH_SECRET') as string,
       ignoreExpiration: false,
       passReqToCallback: true,
-    });
+    } as any);
   }
 
-  async validate(req: Request, payload: { sub: string; email: string }) {
-    const refreshToken = (req as any).body?.refreshToken;
+  async validate(req: any, payload: { sub: string; email: string }) {
+    const refreshToken = req.body?.refreshToken;
     return { ...payload, refreshToken };
   }
 }
 
-// ─── Local Strategy (email + password) ───────────────────────────────────────
 import { Strategy as LocalStrategy } from 'passport-local';
 import { AuthService } from '../auth.service';
 
 @Injectable()
-export class LocalAuthStrategy extends PassportStrategy(LocalStrategy, 'local') {
+export class LocalAuthStrategy extends PassportStrategy(
+  LocalStrategy,
+  'local',
+) {
   constructor(private authService: AuthService) {
     super({ usernameField: 'email' });
   }
