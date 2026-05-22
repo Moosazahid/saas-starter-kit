@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtAuthGuard } from './auth/guards/auth.guards';
 import { BillingModule } from './billing/billing.module';
+import { OrgsModule } from './orgs/orgs.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { BillingModule } from './billing/billing.module';
     PrismaModule,
     AuthModule,
     BillingModule,
+    OrgsModule
   ],
   providers: [
     {
