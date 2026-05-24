@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-api:
+    name: Test API
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: saas_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/api/package-lock.json
+
+      - name: Install API dependencies
+        run: cd apps/api && npm ci
+
+      - name: Generate Prisma Client
+        run: cd apps/api && npx prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/saas_db
+
+      - name: Run Prisma migrations
+        run: cd apps/api && npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/saas_db
+
+      - name: Lint API
+        run: cd apps/api && npm run lint
+
+      - name: Build API
+        run: cd apps/api && npm run build
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/saas_db
+          JWT_SECRET: test-jwt-secret
+          JWT_REFRESH_SECRET: test-jwt-refresh-secret
+
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install Web dependencies
+        run: cd apps/web && npm ci
+
+      - name: Build Web
+        run: cd apps/web && npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001
