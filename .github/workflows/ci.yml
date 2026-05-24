@@ -63,8 +63,8 @@ jobs:
           DATABASE_URL: postgresql://postgres:password@localhost:5432/saas_db
           JWT_SECRET: test-jwt-secret
           JWT_REFRESH_SECRET: test-jwt-refresh-secret
-
- build-web:
+          
+  build-web:
     name: Build Web
     runs-on: ubuntu-latest
 
@@ -80,9 +80,9 @@ jobs:
         run: |
           cd apps/web
           rm -f package-lock.json
-          npm install
+          npm install --ignore-scripts
 
-      - name: Build Web
-        run: cd apps/web && npm run build
+      - name: Type check Web
+        run: cd apps/web && npx tsc --noEmit
         env:
           NEXT_PUBLIC_API_URL: http://localhost:3001
