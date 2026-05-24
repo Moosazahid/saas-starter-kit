@@ -64,7 +64,7 @@ jobs:
           JWT_SECRET: test-jwt-secret
           JWT_REFRESH_SECRET: test-jwt-refresh-secret
 
-  build-web:
+ build-web:
     name: Build Web
     runs-on: ubuntu-latest
 
@@ -77,7 +77,10 @@ jobs:
           node-version: 20
 
       - name: Install Web dependencies
-        run: cd apps/web && npm install
+        run: |
+          cd apps/web
+          rm -f package-lock.json
+          npm install
 
       - name: Build Web
         run: cd apps/web && npm run build
